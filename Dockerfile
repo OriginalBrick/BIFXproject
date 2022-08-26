@@ -9,7 +9,7 @@ FROM rocker/shiny:4.2.1
 
 # install shiny app
 RUN rm -r /srv/shiny-server/*
-COPY shiny/* /srv/shiny-server/.
+COPY shiny/ /srv/shiny-server/
 
 # run app
 CMD ["/usr/bin/shiny-server"]
