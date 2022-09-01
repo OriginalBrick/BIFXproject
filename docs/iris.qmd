@@ -1,0 +1,150 @@
+---
+title: "Week 2: Iris Lab in Quarto"
+author: "Based on the tutorial found at https://rpubs.com/moeransm/intro-iris."
+format:
+  html:
+    theme:
+     light: flatly
+     dark: darkly
+editor: visual
+---
+
+# **Introduction**
+
+Numerous guides have been written on the exploration of this widely known dataset. Iris, introduced by Ronald Fisher in his 1936 paper *The use of multiple measurements in taxonomic problems*, contains three plant species (setosa, virginica, versicolor) and four features measured for each sample. These quantify the morphologic variation of the iris flower in its three species, all measurements given in centimeters.
+
+Any comments within our code have to be preceded by the pound sign to notify the compiler to ignore them. `# comments appear like this in code`
+
+# **Load the iris dataset**
+
+```{r}
+# The datasets package needs to be loaded to access our data 
+# For a full list of these datasets, type library(help = "datasets")
+library(datasets)
+data(iris)
+summary(iris)
+```
+
+::: {.callout-tip appearance="simple"}
+The `summary()` function gives summary statistics for any dataset. It can also be called on one variable instead of on the whole dataset. Try `summary(iris$Sepal.Length)` and compare that with the above summaries.
+:::
+
+Alternatively, you may only want to know the column names of your dataset, in which case you can use `names(NameOfdataset)`, which in our case would look like `names(iris)`. Also notice that each coloumn name in the `iris` dataset has some upper case letters, which might be inconvenient to work with. You can then call the `tolower()` function on `names(iris)` to make this change. For those who might prefer upper case column names, the `toupper()` function will instead, be useful.
+
+Written packages make it easier to work with datasets than regular baseR functions. They have been optimized to be faster and more intuitive than baseR functions, therefore reducing the steepness of the R learning curve. Let's take a look;
+
+# **The dplyr package**
+
+Use `install.packages("dplyr")` in your console to install this package. Note that you must be connected to the internet. If you've opened a new R script file, you will need to use the keys CTRL+Enter \[PC\] or Cmd+Enter \[Mac\] to run the commands.
+
+### **filter()**
+
+```{r}
+names(iris) <- tolower(names(iris))
+library(dplyr)
+```
+
+```{r}
+# filter() the data for species virginica
+virginica <- filter(iris, species == "virginica")
+head(virginica) # This displays the first six rows
+```
+
+Notice that we use the `logical` double equal sign as in `species == "virginica"`, and quotations around `virginica` since this value is of a `char` (character) data type. The equivalent `base` command for `filter()` would be `subset()`, with all the inner arguments being exactly the same. We can also filter for multiple conditions within our function.
+
+```{r}
+sepalLength6 <- filter(iris, species == "virginica", sepal.length > 6)
+tail(sepalLength6) # compare this to head()
+```
+
+The syntax for using `subset()` would be `subset(iris, species == "virginica" & sepal.length > 6)` and using `<-` to assign it to a variable of your choice, which in our case is `sepalLength6`.
+
+### **select()**
+
+This function selects data by column name. You can select any number of columns in a few different ways.
+
+```{r}
+# select() the specified columns
+selected <- select(iris, sepal.length, sepal.width, petal.length)
+# select all columns from sepal.length to petal.length
+selected2 <- select(iris, sepal.length:petal.length)
+head(selected, 3)
+```
+
+```{r}
+# selected and selected2 are exactly the same
+identical(selected, selected2)
+```
+
+### **mutate()**
+
+Create new columns using this function:
+
+```{r}
+# create a new column that stores logical values for sepal.width greater than half of sepal.length
+newCol <- mutate(iris, greater.half = sepal.width > 0.5 * sepal.length)
+tail(newCol)
+```
+
+Challenge: Out of the 150 flowers, find how many satisfy this condition. Hint: use the `sum()` function on `newCol$greater.half.`
+
+### **Other functions**
+
+```{r}
+# arrange()
+newCol <- arrange(newCol, petal.width)
+head(newCol)
+```
+
+```{r}
+# The chain operator, or the pipeline %>%
+# This will first filter, and then arrange our data. Note that here the order in which you call functions does not matter, but in other cases it might
+arr.virg <- newCol %>% filter(species == "virginica") %>%
+  arrange(sepal.width)
+arr.virg[30:35,] # will show us rows 30 through 35 and all columns
+```
+
+```{r}
+# You can also arrange in descending order using desc() on what you arrange by
+# arrange(desc(sepal.width))
+# summarise()
+summarise(arr.virg, mean.length = mean(sepal.length, na.rm = TRUE))
+```
+
+This is the mean sepal.length for the virginica species. Challenge2: The standard deviation gives how much individual values vary from the mean. Find the standard deviation of sepal.length using `summarise()` and `sd()`.
+
+### **Visualization**
+
+Any powerful analysis will visualize the data to give a better picture (*wink wink*) of the data. Below is a general plot of the iris dataset:
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+plot(iris)
+```
+
+If we're looking to plot specific variables, we can use `plot(x,y)` where `x` and `y` are the variables we're interested in. `hist()` is another useful function.
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+# use ?plot to read more about other arguments
+plot(iris$sepal.width, iris$sepal.length)
+```
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+# ?hist will give you details on more arguments
+hist(iris$sepal.width)
+```
+
+Notice that in flowers with greater sepal widths tend to have shorter sepal lengths.
+
+For more resources on R, visit:
+
+-   <http://www.cyclismo.org/tutorial/R/>
+
+-   <http://www.tutprialspoint.com/r>
+
+-   [http://had.co.nz](http://had.co.nz/)
