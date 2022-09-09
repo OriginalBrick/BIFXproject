@@ -1,0 +1,341 @@
+---
+title: "Homework 3 - Subsetting Data and Flow Control in R"
+format: docx
+---
+
+Fill out [this Quarto document](https://github.com/BIFX552-22/CourseInfo/hw/03Rdata_flow.qmd) while completing the lesson on subsetting data and flow control in R.
+
+### [Subsetting Data](https://swcarpentry.github.io/r-novice-gapminder/06-data-subsetting/index.html)
+
+::: callout-tip
+## Key Points
+
+-   Indexing in R starts at 1, not 0.
+-   Access individual values by location using `[]`.
+-   Access slices of data using `[low:high]`.
+-   Access arbitrary sets of data using `[c(...)]`.
+-   Use logical operations and logical vectors to access subsets of data.
+:::
+
+#### Challenge 1
+
+Given the following code:
+
+```{r}
+x <- c(5.4, 6.2, 7.1, 4.8, 7.5)
+names(x) <- c('a', 'b', 'c', 'd', 'e')
+print(x)
+```
+
+Come up with at least 2 different commands that will produce the following output:
+
+      b   c   d 
+    6.2 7.1 4.8 
+
+```{r}
+# your commands go here
+x[c(2,3,4)]
+x[2:4]
+x[-c(1,5)]
+```
+
+#### Challenge 2
+
+Given the following code:
+
+```{r}
+x <- c(5.4, 6.2, 7.1, 4.8, 7.5)
+names(x) <- c('a', 'b', 'c', 'd', 'e')
+print(x)
+```
+
+Write a subsetting command to return the values in x that are greater than 4 and less than 7.
+
+```{r}
+# your command goes here
+x[x > 4 & x < 7]
+```
+
+#### Challenge 3
+
+Selecting elements of a vector that match any of a list of components is a very common data analysis task. For example, the gapminder data set contains `country` and `continent` variables, but no information between these two scales. Suppose we want to pull out information from southeast Asia: how do we set up an operation to produce a logical vector that is `TRUE` for all of the countries in southeast Asia and `FALSE` otherwise?
+
+Suppose you have these data:
+
+```{r}
+seAsia <- c("Myanmar","Thailand","Cambodia","Vietnam","Laos")
+## load the gapminder data that we introduced last week
+library(gapminder)
+data(gapminder)
+
+## extract the `country` column from a data frame (we'll see this later);
+## convert from a factor to a character;
+## and get just the non-repeated elements
+countries <- unique(as.character(gapminder$country))
+```
+
+Another way to do this, is using the `%>%` operator from the `magrittr` package, which I find much easier to read than cramming everything on a single line.
+
+```{r}
+library(magrittr)
+
+countries <- gapminder$country %>% ## extract the `country` column from a data frame
+  as.character() %>%               ## convert from a factor to a character;
+  unique()                         ## and get just the non-repeated elements
+```
+
+There's a wrong way (using only `==`), which will give you a warning; a clunky way (using the logical operators `==` and `|`); and an elegant way (using `%in%`). See whether you can come up with all three and explain how they (don't) work.
+
+```{r}
+# wrong way to subset `countries`
+countries[countries == seAsia]
+
+# clunky way to subset `contrues`
+countries[countries == seAsia[1] |
+          countries == seAsia[2] |  
+          countries == seAsia[3] |  
+          countries == seAsia[4] |  
+          countries == seAsia[5]]
+
+# elegant way to subset `countries`
+countries[countries %in% seAsia]
+
+```
+
+#### Challenge 4
+
+Given the following code:
+
+```{r}
+m <- matrix(1:18, nrow=3, ncol=6)
+print(m)
+```
+
+Which of the following commands will extract the values 11 and 14?
+
+A. `m[2,4,2,5]`
+
+B. `m[2:5]`
+
+C. `m[4:5,2]`
+
+D. `m[2,c(4,5)]` - This is the only correct colution.
+
+```{r}
+m[2,c(4,5)]
+```
+
+#### Challenge 5
+
+Given the following code:
+
+```{r}
+xlist <- list(a = "Software Carpentry", b = 1:10, data = head(mtcars))
+```
+
+Using your knowledge of both list and vector subsetting, extract the number 2 from xlist. Hint: the number 2 is contained within the "b" item in the list.
+
+```{r}
+xlist$b[2]
+```
+
+#### Challenge 6
+
+Given a linear model:
+
+```{r}
+mod <- aov(pop ~ lifeExp, data=gapminder)
+```
+
+Extract the residual degrees of freedom (hint: `attributes()` will help you)
+
+```{r}
+attributes(mod)
+mod$df.residual
+```
+
+#### Challenge 7
+
+Fix each of the following common data frame subsetting errors:
+
+-   Extract observations collected for the year 1957
+
+```{r}
+gapminder[gapminder$year == 1957,]
+```
+
+-   Extract all columns except 1 through to 4
+
+```{r}
+gapminder[,-(1:4)]
+```
+
+-   Extract the rows where the life expectancy is longer the 80 years
+
+```{r}
+gapminder[gapminder$lifeExp > 80,]
+```
+
+-   Extract the first row, and the fourth and fifth columns (`continent` and `lifeExp`).
+
+```{r}
+gapminder[1,c(4,5)]
+```
+
+-   Advanced: extract rows that contain information for the years 2002 and 2007
+
+```{r}
+gapminder[gapminder$year %in% c(2002,2007),]
+```
+
+#### Challenge 8
+
+1.  Why does `gapminder[1:20]` return an error? How does it differ from `gapminder[1:20, ]`?
+
+    The first command doesn't work because there aren't 20 columnsg. The second command works because the range of 20 is applying only to rows, of which there are far more than 20.
+
+2.  Create a new `data.frame` called `gapminder_small` that only contains rows 1 through 9 and 19 through 23. You can do this in one or two steps.
+
+```{r}
+# your code goes here
+gapminder_small <- gapminder[c(1:9,19:23),]
+```
+
+### [Flow Control](https://swcarpentry.github.io/r-novice-gapminder/07-control-flow/index.html)
+
+::: callout-tip
+## Key Points
+
+-   Use if and else to make choices.
+-   Use for to repeat operations.
+:::
+
+#### Challenge 1
+
+Use an `if()` statement to print a suitable message reporting whether there are any records from 2002 in the `gapminder` dataset.
+
+```{r}
+if(any(gapminder$year == 2002))
+{
+  print("Gapminder records EXIST for 2002.")
+}else{
+  print("Gapminder records DO NOT EXIST for 2002.")
+}
+```
+
+Now do the same for 2012.
+
+```{r}
+if(any(gapminder$year == 2012))
+{
+  print("Gapminder records EXIST for 2012.")
+}else{
+  print("Gapminder records DO NOT EXIST for 2012.")
+}
+```
+
+```{r}
+gapminder$gt2000 <- gapminder$year
+gapminder$gt2000 <- ifelse(gapminder$year>2000,
+                           1,
+                           0)
+```
+
+```{r}
+output_vector <- matrix(NA,nrow=5,ncol=8)
+for(i in 1:5)
+{
+  for(j in 1:8)
+  {
+    output_vector[i,j] <- paste0(i,letters[j])
+  }
+}
+output_vector
+```
+
+#### Challenge 2
+
+Given `output_vector` and `output_vector2`:
+
+```{r}
+output_vector <- c()
+for (i in 1:5) {
+  for (j in c('a', 'b', 'c', 'd', 'e')) {
+    temp_output <- paste(i, j)
+    output_vector <- c(output_vector, temp_output)
+  }
+}
+
+output_matrix <- matrix(nrow = 5, ncol = 5)
+j_vector <- c('a', 'b', 'c', 'd', 'e')
+for (i in 1:5) {
+  for (j in 1:5) {
+    temp_j_value <- j_vector[j]
+    temp_output <- paste(i, temp_j_value)
+    output_matrix[i, j] <- temp_output
+  }
+}
+output_vector2 <- as.vector(output_matrix)
+
+output_vector
+output_vector2
+```
+
+Compare the objects `output_vector` and `output_vector2`. Are they the same? If not, why not? How would you change the last block of code to make `output_vector2` the same as `output_vector`?
+
+```{r}
+#Easiest way to do this is using t().
+output_vector
+output_vector2 <- as.vector(t(output_matrix))
+output_vector2
+
+```
+
+#### Challenge 3
+
+Write a script that loops through the `gapminder` data by continent and prints out whether the mean life expectancy is smaller or larger than 50 years.
+
+```{r}
+continents <- unique(gapminder$continent) %>%
+      as.character()
+
+for(i in continents)
+{
+  tmp <- gapminder[gapminder$continent == i & gapminder$year == 1957,]$lifeExp %>%
+    mean()
+  if(tmp>50)
+  {
+    paste("The mean life expectancy for",i,"is greater than 50 years.") %>%
+      print()
+  }else{
+    paste("The mean life expectancy for",i,"is less than 50 years.") %>%
+      print()
+  }
+}
+```
+
+#### Challenge 4
+
+Modify the script from Challenge 3 to loop over each country. This time print out whether the life expectancy is smaller than 50, between 50 and 70, or greater than 70.
+
+```{r}
+countries <- unique(gapminder$country) %>%
+      as.character()
+
+for(i in countries)
+{
+  tmp <- gapminder[gapminder$country == i & gapminder$year == 2002,]$lifeExp
+  
+  if(tmp<50)
+  {
+    paste("The mean life expectancy for",i,"is less than 50 years.") %>%
+      print()
+  }else if(tmp < 70){
+    paste("The mean life expectancy for",i,"is greater than 50 years","and less than 70 years.") %>%
+      print()
+  }else{
+    paste("The mean life expectancy for",i,"is greater than 70 years.") %>%
+      print()
+  }
+}
+```

@@ -8,12 +8,23 @@
 #' @return An updated list combining `input` with results from `seed`
 magic_coin <- function(seeds, input = list())
 {
-    # check for up to 100 heads in a row (it is unlikely that we'll find 100)
-    ncheck <- 100
+    ncheck <- 100 # check for up to 100 heads in a row (it is unlikely that we'll find 100)
+    nheads <- numeric(length(seeds)) # List for number of heads found each time.
     
-    #...
+    for(i in 1:length(seeds))
+    {
+      # Set seed to each index in seeds
+      set.seed(seeds[i])
+      
+      # Generate first 10 numbers
+      CurrentStr <- rbinom(ncheck,1,0.5)
+      
+      # Get their sum and record the number of heads
+      CurrentSum <- sum(CurrentStr)
+      nheads[i] <- CurrentSum
+    }
     
-    bind_rows(input,
+    bind_rows(input, 
               tibble(nheads = nheads,
                      seed = seeds)) %>%
         return()
