@@ -42,8 +42,11 @@ shinyServer(function(input, output) {
             }
         }
         
+        tmp$trial_number <- 1:nrow(tmp)
+        
         # generate figure
-        # ...
+        ggplot(tmp, aes(trial_number,nmax)) + 
+          geom_line()
     })
     
     # display the best seed so far
@@ -66,13 +69,22 @@ shinyServer(function(input, output) {
     
     # Buttons to do additional trials
     observeEvent(input$add1, {
-        trials(magic_coin(as.integer(runif(10, 1, .Machine$integer.max)), trials()))
+      runif(10, 1, .Machine$integer.max) %>%
+        as.integer() %>%
+        magic_coin(trials()) %>%
+        trials()
     })
 
     observeEvent(input$add2, {
-        # ...
+      runif(100, 1, .Machine$integer.max) %>%
+        as.integer() %>%
+        magic_coin(trials()) %>%
+        trials()
     })
     observeEvent(input$add3, {
-        # ...
+      runif(1000, 1, .Machine$integer.max) %>%
+        as.integer() %>%
+        magic_coin(trials()) %>%
+        trials()
     })
 })

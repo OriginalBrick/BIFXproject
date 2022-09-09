@@ -23,7 +23,7 @@ shinyUI(fluidPage(
                          min = 1,
                          max = .Machine$integer.max,
                          value = round(runif(1) * 1e5)),
-            textOutput("best.seed")
+            textOutput("best.seed"),
         ),
 
         # Show a plot of the generated distribution
