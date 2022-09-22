@@ -38,7 +38,7 @@ library(knitr)
 
 ## Canine confounders
 
-We'll be using a [COVID-19 dataset from Mexico City](bit.ly/3Ou4n2U) that was featured in an article in Significance Magazine titled [Canine Confounders](https://rss.onlinelibrary.wiley.com/doi/epdf/10.1111/1740-9713.01670) [@nunez2022].
+We'll be using a [COVID-19 dataset from Mexico City](https://bit.ly/3Ou4n2U) that was featured in an article in Significance Magazine titled [Canine Confounders](https://rss.onlinelibrary.wiley.com/doi/epdf/10.1111/1740-9713.01670) [@nunez2022].
 
 What is presented here is intentionally rough and open ended. After filling in the missing details in the [starter code](https://github.com/BIFX552-22/BIFXproject/blob/main/docs/covid.qmd), what other questions might you have? What other tests and/or visualizations might be interesting?
 
@@ -46,7 +46,7 @@ What is presented here is intentionally rough and open ended. After filling in t
 # download data if we haven't already
 if(!file.exists('sisver_public.csv'))
 {
-    download.file(url = "https://archivo.datos.cdmx.gob.mx/sisver/sisver_public.csv",
+    download.file(url = "https://archivo.datos.cdmx.gob.mx/sisver/covid19_sisver_cdmx.csv",
               destfile = "sisver_public.csv")
 }
 
