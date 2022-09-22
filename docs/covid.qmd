@@ -1,0 +1,217 @@
+---
+title: "COVID Data Exploration"
+format: 
+  html:
+    theme: 
+      light: flatly
+      dark: darkly
+bibliography: references.bib
+editor: visual
+---
+
+## Agenda
+
+-   Today's lab
+    -   Review of [Canine Confounders](https://rss.onlinelibrary.wiley.com/doi/epdf/10.1111/1740-9713.01670)
+    -   Practice visualization using `ggplot2`
+
+```{r}
+#| message: false
+# We will be using the following packages in today's lab.
+library(dplyr)
+library(readr)
+library(stringr)
+library(lubridate)
+library(purrr)
+
+library(survival)
+library(ggfortify)
+
+library(ggplot2)
+library(cowplot)
+theme_set(theme_cowplot())
+library(patchwork)
+source('https://tinyurl.com/wjm6ryj') # colorblind palettes
+
+library(knitr)
+```
+
+## Canine confounders
+
+We'll be using a [COVID-19 dataset from Mexico City](bit.ly/3Ou4n2U) that was featured in an article in Significance Magazine titled [Canine Confounders](https://rss.onlinelibrary.wiley.com/doi/epdf/10.1111/1740-9713.01670) [@nunez2022].
+
+What is presented here is intentionally rough and open ended. After filling in the missing details in the [starter code](https://github.com/BIFX552-22/BIFXproject/blob/main/docs/covid.qmd), what other questions might you have? What other tests and/or visualizations might be interesting?
+
+```{r}
+# download data if we haven't already
+if(!file.exists('sisver_public.csv'))
+{
+    download.file(url = "https://archivo.datos.cdmx.gob.mx/sisver/sisver_public.csv",
+              destfile = "sisver_public.csv")
+}
+
+# only do this formatting step once
+if(!file.exists('sisver.RData'))
+{
+    sisver <- read_csv('sisver_public.csv') %>%
+        rename(dt_symptoms = fecinisi, # date that symptoms started
+               dt_admit = fechreg,     # date admitted to hospital
+               dt_death = fecdef       # death date
+    ) %>%
+    
+           # primary outcomes
+    mutate(hospitalized = tipacien == 'HOSPITALIZADO',
+           covid_death = !is.na(dt_death),
+           intubation = intubado == 'SI',
+           death_intubation = covid_death | intubation,
+
+           # survival variables
+           event_date = if_else(is.na(dt_death),   # censor at 30 days
+                                dt_admit + days(30), dt_death),
+           event_time = seconds_to_period(event_date - dt_admit)@day,
+           t_sympt_death = Surv(event_time, covid_death),
+
+           # risk factors and confounders
+           dog = ifelse(conanima == "", NA,        # look for dogs as pets
+                        str_detect(conanima, "PERR|PERO|PERRI|CANINO")),
+           private = sector == "PRIVADA",          # private sector care
+           pet_info = !is.na(dog),                 # has info on pets
+           dog_all = ifelse(pet_info,              # add dog category for missing
+                            dog, 'Missing') %>%
+               factor(levels = c('Missing', 'FALSE', 'TRUE')),
+           antivirals = ifelse(txantivi == "", NA, # used antivirals
+                               txantivi == "SI"),
+           diabetes = ifelse(diabetes == "", NA,   # has diabetes
+                             diabetes == "SI"),
+           hyperten = ifelse(hiperten == "", NA,   # has hypertension
+                             hiperten == "SI"),
+           obese = ifelse(obesidad == "", NA,      # has obesity
+                          obesidad == "SI"),
+           age_gt_65 = edad >= 65,                 # age > 65 years
+           sex = ifelse(sexo == "MASCULINO",       # sex
+                        'M', 'F')) %>%
+        
+########################################################################
+    #### Filter data such that we only have individuals with:
+        ### hospital admission date between Jan 1, 2021 and Apr 5, 2021
+        ### individuals were hospitalized
+        ### event time is between 0 and 30 days
+########################################################################
+    
+    select(dt_symptoms, dt_admit, dt_death, covid_death, event_date,
+           event_time, death_intubation, t_sympt_death, dog, dog_all, 
+           private, pet_info, antivirals, diabetes, hyperten, obese,
+           age_gt_65, sex, sector)
+    
+    save(sisver, file = 'sisver.RData')
+}else{
+    load('sisver.RData')
+}
+
+```
+
+Let's start by looking at the primary effects of different risk factors and confounders on mortality.
+
+```{r}
+table1 <- tibble(factor = c('Antivirals', 'Diabetes', 'Hyptertension',
+                            'Obesity', 'Age > 65', 'Sex (male)',
+                            'Private Sector', 'Dog ownership'),
+                 death_intubation = list(
+                     glm(death_intubation ~ antivirals, data = sisver, family = binomial),
+                     glm(death_intubation ~   diabetes, data = sisver, family = binomial),
+                     glm(death_intubation ~   hyperten, data = sisver, family = binomial),
+                     glm(death_intubation ~      obese, data = sisver, family = binomial),
+                     glm(death_intubation ~  age_gt_65, data = sisver, family = binomial),
+                     glm(death_intubation ~        sex, data = sisver, family = binomial),
+                     glm(death_intubation ~    private, data = sisver, family = binomial),
+                     glm(death_intubation ~        dog, data = sisver, family = binomial)),
+                 OR = map_dbl(death_intubation, ~ 
+                                  exp(summary(.x)$coefficients[2,1])),
+                 p_OR = map_dbl(death_intubation, ~ 
+                                summary(.x)$coefficients[2,4]),
+                   
+                 death_survival = list(
+                     coxph(t_sympt_death ~ antivirals, data = sisver),
+                     coxph(t_sympt_death ~   diabetes, data = sisver),
+                     coxph(t_sympt_death ~   hyperten, data = sisver),
+                     coxph(t_sympt_death ~      obese, data = sisver),
+                     coxph(t_sympt_death ~  age_gt_65, data = sisver),
+                     coxph(t_sympt_death ~        sex, data = sisver),
+                     coxph(t_sympt_death ~    private, data = sisver),
+                     coxph(t_sympt_death ~        dog, data = sisver)
+                 ),
+                 HR = map_dbl(death_survival, ~
+                              summary(.x)$coefficients[2]),
+                 p_HR = map_dbl(death_survival, ~
+                                summary(.x)$coefficients[5]))
+
+select(table1, factor, OR, p_OR, HR, p_HR) %>%
+    mutate(p_OR = format.pval(p_OR),
+           p_HR = format.pval(p_HR)) %>%
+    kable(digits = c(NA, 2, 4, 2, 4),
+          align = c('l', 'r', 'r', 'r', 'r'))
+```
+
+Here are Kaplan-Meier plots for our risk factors and confounders.
+
+```{r}
+make_km_plot <- function(fact)
+{
+    # fit survival curve for fact
+    survfit(formula(paste("t_sympt_death ~", fact)), data = sisver) %>%
+        
+        # plot survival curve
+        autoplot(conf.int = FALSE) +
+        
+########################################################################
+        # modifications to plot: 
+        ### use `cbbPalette` loaded above for colors
+        ### change legend title to match `fact`
+########################################################################
+}
+
+make_km_plot('antivirals')
+make_km_plot(  'diabetes')
+make_km_plot(  'hyperten')
+make_km_plot(     'obese')
+make_km_plot( 'age_gt_65')
+make_km_plot(       'sex')
+make_km_plot(   'private')
+make_km_plot(       'dog')
+```
+
+Lets take a look at the missing rate of dog ownership by the hospital they were admitted to.
+
+```{r}
+with(sisver, table(sector, dog_all)) %>%
+    kable()
+```
+
+After removing a few sectors that don't have much data, let's look at this graphically over time.
+
+```{r}
+# start by removing those that have very few samples
+sisver_sub <- sisver %>%
+########################################################################
+## filter `sisver` such that sector is not in:
+## c('CRUZ ROJA', 'ESTATAL', 'IMSS-OPORTUNIDADES', 'SEMAR', 'UNIVERSITARIO')
+########################################################################
+
+########################################################################
+# first stacked bar plot
+## hint: `geom_bar()` is what you want for the stacked bar plot
+########################################################################
+
+########################################################################
+# grid of stacked bar plots, separated by sector
+########################################################################
+```
+
+How does the risk of death change by `sector`, compared to the private sector?
+
+```{r}
+mutate(sisver_sub,
+       sector = factor(sector, levels = c("PRIVADA", "SSA", "IMSS", "ISSSTE", "PEMEX", "SEDENA"))) %>%
+glm(formula = death_intubation ~ sector, family = binomial) %>%
+    summary()
+```
