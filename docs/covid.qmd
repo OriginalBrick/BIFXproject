@@ -39,15 +39,16 @@ We'll be using a [COVID-19 dataset from Mexico City](https://bit.ly/3Ou4n2U) tha
 What is presented here is intentionally rough and open ended. After filling in the missing details in the [starter code](https://github.com/BIFX552-22/BIFXproject/blob/main/docs/covid.qmd), what other questions might you have? What other tests and/or visualizations might be interesting?
 
 ```{r}
-# download data if we haven't already
-if(!file.exists('sisver_public.csv'))
+# download data if we need to refresh
+# note that the current link below has some changes to the data since this lesson was developed! There are at least 4 variable name changes, and the number of rows is also different. I'm pushing the current version of the small RData file for now, but be aware that there will be some updates to the code needed if we do a refresh. Go to https://bit.ly/3Ou4n2U for updated data.
+if(FALSE)
 {
     download.file(url = "https://archivo.datos.cdmx.gob.mx/sisver/covid19_sisver_cdmx.csv",
               destfile = "sisver_public.csv")
 }
 
 # only do this formatting step once
-if(!file.exists('sisver.RData'))
+if(FALSE)
 {
     sisver <- read_csv('sisver_public.csv') %>%
         rename(dt_symptoms = fecha_inicio_sintomas,   # date that symptoms started
@@ -56,7 +57,7 @@ if(!file.exists('sisver.RData'))
     ) %>%
     
            # primary outcomes
-    mutate(hospitalized = tipo_paciente == 'HOSPITALIZADO',
+    mutate(hospitalized = tipacien == 'HOSPITALIZADO',
            covid_death = !is.na(dt_death),
            intubation = intubado == 'SI',
            death_intubation = covid_death | intubation,
@@ -86,19 +87,11 @@ if(!file.exists('sisver.RData'))
            age_gt_65 = edad >= 65,                 # age > 65 years
            sex = ifelse(sexo == "MASCULINO",       # sex
                         'M', 'F')) %>%
-        
-########################################################################
-    #### Filter data such that we only have individuals with:
-        ### hospital admission date between Jan 1, 2021 and Apr 5, 2021
-        ### individuals were hospitalized
-        ### event time is between 0 and 30 days
-########################################################################
     
-    filter(
-        dt_admit >= "2021-01-01" & dt_admit <= "2021-04-05" &
-        hospitalized &
-        event_time > 0 & event_time < 30) %>%
-
+    filter(dt_admit >= "2021-01-01" & dt_admit <= "2021-04-05" &
+           hospitalized &
+           event_time >= 0 & event_time <= 30) %>%
+    
     select(dt_symptoms, dt_admit, dt_death, covid_death, event_date,
            event_time, death_intubation, t_sympt_death, dog, dog_all, 
            private, pet_info, antivirals, diabetes, hyperten, obese,

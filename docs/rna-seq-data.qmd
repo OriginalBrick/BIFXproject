@@ -1,0 +1,154 @@
+---
+title: "RNA-seq Data"
+format: html
+editor: visual
+---
+
+```{r}
+#| inclue: false
+#| message: false
+
+source('https://tinyurl.com/wjm6ryj')
+
+if(FALSE)
+{
+    download.file(url = "https://github.com/Bioconductor/bioconductor-teaching/raw/master/data/GSE96870/rnaseq.csv",
+              destfile = "data/rnaseq.csv")
+}
+
+### Read in data here ###
+dat <- 
+```
+
+Note: this lab borrows heavily from a [Carpentries incubator module on visualization](https://carpentries-incubator.github.io/bioc-intro/40-visualization/index.html).
+
+## RNA-Seq data
+
+To start out with, let's explore the data provided:
+
+```{r}
+
+```
+
+Take a look at the distribution of the expression levels:
+
+```{r}
+#| message: false
+# hint: use geom_histogram
+## You'll probably notice an automatic message that appears when drawing the histogram: `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+## Change the arguments bins or binwidth of geom_histogram() to change the number or width of the bins.
+```
+
+The data should be transformed. Transforming on the $\log_{10}$ scale is easy in `ggplot2`,
+
+```{r}
+#| warning: false
+# transform x-axis to log_10 scale
+```
+
+but we often use a $log_2$ scale when looking at expression data:
+
+```{r}
+#| warning: false
+
+# the following code will be helpful
+ticks_at <- c(0,5,10,15)
+    scale_x_continuous(breaks = ticks_at, labels = 2^ticks_at) +
+```
+
+### Building plots iteratively
+
+We will now draw a scatter plot with two continuous variables and the `geom_point()` function. This graph will represent the $\log_2$ fold changes of expression comparing time 8 versus time 0, and time 4 versus time 0. To this end, we first need to compute the means of the log-transformed expression values by gene and time, then the log fold changes by subtracting the mean log expressions between time 8 and time 0 and between time 4 and time 0.
+
+```{r}
+#| message: false
+# fold change data
+
+     # calculate summaries of log2 expression grouped by gene, time, gene_biotype
+
+    # pivot wider so that there is a separate column for each value in time
+
+    mutate(, # compare time 8 vs 0
+           ) # compare time 4 vs 0
+
+# visualize time_4_vs_0 by time_8_vs_0 
+# hint: the following line will be helpful
+    geom_abline(intercept = 0, slope = 1)
+```
+
+We could also add color, but it begins to get a little messy with the large number of categories we have.
+
+```{r}
+# insert code here
+```
+
+Over-plotting can be an issue with large datasets like this. One solution is using `hexbin:geom_hex()`.
+
+```{r}
+# code goes here
+```
+
+### Box plots
+
+We can use boxplots to visualize the distribution of gene expressions within each sample:
+
+```{r}
+# code goes here
+```
+
+Adding points to box plots can give us a better understanding of the underlying distributions.
+
+```{r}
+# hints: use geom_jitter to plot points; this line of code will be helpful
+    theme(axis.text.x = element_text(angle = 90,  hjust = 0.5, vjust = 0.5))
+```
+
+We could also use `geom_violin` to better see the distribution of points. Try coloring the points by `time` as well.
+
+```{r}
+# code goes here
+```
+
+### Line plots
+
+Let's calculate the mean expression per duration of the infection for the 10 genes having the highest log fold changes comparing time 8 versus time 0. We can do this either by coloring each gene or using `facet_wrap`.
+
+```{r}
+#| message: false
+
+# First, we need to select the top 10 genes
+
+# Then create a subset of dat containing the 10 selected genes
+
+    # Then group the data by gene and time
+    # calculate the mean gene expression within each group
+
+# plot summary lines
+
+```
+
+Now we would like to split the line in each plot by the sex of the mice.
+
+```{r}
+#| message: false
+# Create a subset of dat containing the 10 selected genes
+
+    # Then group the data by gene, time, and sex
+    # calculate the mean gene expression within each group
+
+```
+
+Let's do something similar and create a plot that depicts how the average expression of each chromosome changes through the duration of infection.
+
+```{r}
+#| message: false
+# insert code here
+```
+
+The `facet_wrap` geometry extracts plots into an arbitrary number of dimensions to allow them to cleanly fit on one page. On the other hand, the `facet_grid` geometry allows you to explicitly specify how you want your plots to be arranged via formula notation (`rows ~ columns`; a `.` can be used as a placeholder that indicates only one row or column).
+
+Let's modify the previous plot to compare how the mean gene expression of males and females has changed through time:
+
+```{r}
+# One column, facet by rows
+```
