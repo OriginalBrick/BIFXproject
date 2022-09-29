@@ -1,0 +1,107 @@
+---
+title: "Homework 6 - Joining Tables and Software Tips"
+format: docx
+editor: visual
+---
+
+Fill out [this Quarto document](https://github.com/BIFX552-22/CourseInfo/hw/06joining_tables.qmd) while completing the lesson on graphics, vectorization and functions in R.
+
+```{r}
+#| include: false
+if(FALSE)
+{
+    # use this code to install the package we're using for this lesson
+    BiocManager::install("UCLouvain-CBIO/rWSBIM1207")
+}
+
+library("rWSBIM1207")
+data(jdf)
+
+library(dplyr)
+full_join(jdf1, jdf2)
+full_join(jdf1, jdf3, by = c("uniprot" = "UniProt"))
+```
+
+### [Joining Tables](https://carpentries-incubator.github.io/bioc-intro/50-joining-tables/index.html)
+
+::: callout-tip
+## Key Points
+
+-   Join tables of data in R
+:::
+
+#### Challenge 1
+
+Using the `full_join` function, join tables `jdf4` and `jdf5`. What has happened for observations `P26039` and `P02468`?
+
+```{r}
+# Same uniport variable, identical formatting and case.
+names(jdf4)
+names(jdf5)
+
+#Full join it!
+full_join(jdf4, jdf5)
+
+# P26039 is missing in jdf5 so data points from there are N/A.
+# P02468 is missing in jdf4 so data points from there are N/A.
+```
+
+#### Challenge 2
+
+Join tables `jdf4` and `jdf5`, keeping only observations in `jdf4`.
+
+```{r}
+left_join(jdf4, jdf5)
+
+# Same result, but with pipe. Only keeps observations in jdf4.
+jdf4 %>%
+  left_join(jdf5)
+```
+
+#### Challenge 3
+
+Join tables `jdf4` and `jdf5`, keeping only observations in `jdf5`.
+
+```{r}
+right_join(jdf4, jdf5)
+
+# Same result, but with pipe. Only keeps observations in jdf5.
+jdf4 %>%
+  right_join(jdf5)
+```
+
+#### Challenge 4
+
+Join tables `jdf4` and `jdf5`, keeping observations observed in both tables.
+
+```{r}
+inner_join(jdf4, jdf5)
+```
+
+#### Challenge 5
+
+Given the inner join,
+
+```{r}
+inner_join(jdf6, jdf7)
+```
+
+interpret the result, where both tables have duplicated keys.
+
+\<Data is duplicated and matched for each variant entry. This can be fixed by making sure the names are matched properly.\>
+
+```{r}
+inner_join(jdf6, jdf7, by = c('uniprot' = 'uniprot', 'isoform' = 'isoform_num'))
+```
+
+Other ways to join data as well.
+
+```{r}
+x <- c(1,5)
+y <- 6:10
+
+rbind(x,y) # Binds vectors together as rows. 
+cbind(x,y) # Binds vectors together as columns.
+
+# Use bind_rows or bind_cols for dataframes.
+```
