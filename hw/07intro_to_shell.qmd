@@ -1,0 +1,270 @@
+---
+title: "Homework 7 - Intro to working in the shell"
+format: docx
+editor: visual
+---
+
+Fill out [this Quarto document](https://github.com/BIFX552-22/CourseInfo/hw/07intro_to_shell.qmd) while completing the lesson on working in the shell.
+
+To start out, read [Logging into the Hood cluster](https://hood.blackboard.com/bbcswebdav/pid-451170-dt-content-rid-6739862_1/xid-6739862_1) and/or watch [this video](https://youtu.be/W4m9oqq6tg0).
+
+## [Introducing the Shell](https://datacarpentry.org/shell-genomics/01-introduction/index.html)
+
+::: callout-tip
+## Key Points
+
+-   The shell gives you the ability to work more efficiently by using keyboard commands rather than a GUI.
+
+-   Useful commands for navigating your file system include: ls, pwd, and cd.
+
+-   Most commands take options (flags) which begin with a -.
+
+-   Tab completion can reduce errors from mistyping and make work more efficient in the shell.
+:::
+
+Once you have logged into the cluster, enter the following commands to set up your working directory for this lesson. If you prefer to work locally, you can fetch the data from [figshare](https://figshare.com/articles/dataset/Data_Carpentry_Genomics_beta_2_0/7726454).
+
+    # assuming you are working from your home directory
+    scp /BIODATA/BIFX552/shell_data.tar.gz .
+    tar -xf shell_data.tar.gz
+    rm shell_data.tar.gz
+
+#### Challenge
+
+Use the `-l` option for the `ls` command to display more information for each item in the directory. What is one piece of additional information this long format gives you that you don't see with the bare `ls` command?
+
+    -bash-4.2$ ls -l
+    total 8
+    drwxr-xr--. 2 1024 users 4096 Oct 13 17:51 sra_metadata
+    drwxr-xr-x. 2 1024 users 4096 Oct 13 17:51 untrimmed_fastq
+
+> Permissions, file size, owners, date, etc. \## [Navigating Files and Directories](https://datacarpentry.org/shell-genomics/02-the-filesystem/index.html)
+
+::: callout-tip
+### Key Points
+
+-   The `/`, `~`, and `..` characters represent important navigational shortcuts.
+-   Hidden files and directories start with `.` and can be viewed using `ls -a`.
+-   Relative paths specify a location starting from the current location, while absolute paths specify a location from the root of the file system.
+:::
+
+#### Challenge - Finding hidden directories
+
+First navigate to the `shell_data` directory. There is a hidden directory within this directory. Explore the options for `ls` to find out how to see hidden directories. List the contents of the directory and identify the name of the text file in that directory.
+
+Hint: hidden files and folders in Unix start with `.`, for example `.my_hidden_directory`.
+
+    -bash-4.2$ ls -a
+    .  ..  .hidden  sra_metadata  untrimmed_fastq
+
+#### Challenge - Navigating practice
+
+Navigate to your home directory. From there, list the contents of the `untrimmed_fastq` directory.
+
+    # If in the home directory
+    -bash-4.2$ ls shell_data/untrimmed_fastq/
+    SRR097977.fastq  SRR098026.fastq
+
+    # If in the sra_metadata folder
+    -bash-4.2$ ls ../untrimmed_fastq
+    SRR097977.fastq  SRR098026.fastq
+
+#### Challenge - Relative path resolution
+
+Using the filesystem diagram below, if `pwd` displays `/Users/thing`, what will `ls ../backup` display?
+
+-   `../backup: No such file or directory`
+-   `2012-12-01 2013-01-08 2013-01-27`
+-   `2012-12-01/ 2013-01-08/ 2013-01-27/`
+-   `original pnas_final pnas_sub (This one is the answer!)`
+
+![](https://datacarpentry.org/shell-genomics/fig/filesystem-challenge.svg)
+
+## [Working with Files and Directories](https://datacarpentry.org/shell-genomics/03-working-with-files/index.html)
+
+::: callout-tip
+### Key Points
+
+-   You can view file contents using `less`, `cat`, `head` or `tail`.
+-   The commands `cp`, `mv`, and `mkdir` are useful for manipulating existing files and creating new directories.
+-   You can view file permissions using `ls -l` and change permissions using `chmod`.
+-   The history command and the up arrow on your keyboard can be used to repeat recently used commands.
+:::
+
+#### Challenge 1
+
+Do each of the following tasks from your current directory using a single `ls` command for each:
+
+-   List all of the files in `/usr/bin` that start with the letter 'c'.
+-   List all of the files in `/usr/bin` that contain the letter 'a'.
+-   List all of the files in `/usr/bin` that end with the letter 'o'.
+-   Bonus: List all of the files in `/usr/bin` that contain the letter 'a' or the letter 'c'.
+
+Hint: The bonus question requires a Unix wildcard that we haven't talked about yet. Try searching the internet for information about Unix wildcards to find what you need to solve the bonus problem.
+
+    # Things that start with c
+    -bash-4.2$ ls /usr/bin/c*
+    /usr/bin/c++                 /usr/bin/chsh
+    /usr/bin/c2ph                /usr/bin/chvt
+    /usr/bin/c89                 /usr/bin/ci
+    ...
+
+    # Things that contain a
+    -bash-4.2$ ls /usr/bin/*a*
+    /usr/bin/7za
+    /usr/bin/a2p
+    /usr/bin/ab
+    ...
+
+    # Things that end with o
+    -bash-4.2$ ls /usr/bin/*o
+    /usr/bin/abrt-action-install-debuginfo  /usr/bin/nautilus-sendto
+    /usr/bin/bd_info                        /usr/bin/numademo
+    /usr/bin/bluetooth-sendto               /usr/bin/ogginfo
+    ...
+
+    # Things that contain either a or o
+    -bash-4.2$ ls /usr/bin/*[ao]*
+    /usr/bin/7za
+    /usr/bin/a2p
+    /usr/bin/ab
+    ...
+
+    # Could add | head on the end to get first 10 options instead of masssive list you have to scroll through. Use | tail for last 10.
+
+#### Challenge 2
+
+`echo` is a built-in shell command that writes its arguments, like a line of text to standard output. The echo command can also be used with pattern matching characters, such as wildcard characters. Here we will use the `echo` command to see how the wildcard character is interpreted by the shell.
+
+    $ echo *.fastq
+    SRR097977.fastq SRR098026.fastq
+
+The `*` is expanded to include any file that ends with `.fastq`. We can see that the output of `echo *.fastq` is the same as that of `ls *.fastq`.
+
+What would the output look like if the wildcard could not be matched? Compare the outputs of `echo *.missing` and `ls *.missing`.
+
+    -bash-4.2$ echo *.missing
+    *.missing
+
+    -bash-4.2$ ls *.missing
+    ls: cannot access *.missing: No such file or directory
+
+#### Challenge 3
+
+Find the line number in your history for the command that listed all the .sh files in `/usr/bin`. Rerun that command.
+
+    # CTRL + r to search history.
+    # $ history to see list of history. Commands are numbered.
+    # Add | grep *Condition to search.
+    # Can use !CommandNumber to rerun specific number.
+    # Up Arrow to toggle through history one at a time.
+
+    -bash-4.2$ !214
+    ls /usr/bin/*.sh
+    /usr/bin/amuFormat.sh  /usr/bin/lprsetup.sh          /usr/bin/unix-lpr.sh
+    /usr/bin/gettext.sh    /usr/bin/rescan-scsi-bus.sh
+    /usr/bin/lesspipe.sh   /usr/bin/setup-nsssysinit.sh
+
+#### Challenge 4
+
+-   Print out the contents of the `~/shell_data/untrimmed_fastq/SRR097977.fastq` file. What is the last line of the file?
+
+```{=html}
+<!-- -->
+```
+    # cat FileName displays whole thing.
+    # less FileName lets you scroll line by line.
+    # Quit with q. End of file with g.
+    # Can search in less with /*Condition. Use ? instead of / for backward search.
+
+    -bash-4.2$ cat SRR098026.fastq
+    @SRR098026.1 HWUSI-EAS1599_1:2:1:0:968 length=35
+    NNNNNNNNNNNNNNNNCNNNNNNNNNNNNNNNNNN
+    +SRR098026.1 HWUSI-EAS1599_1:2:1:0:968 length=35
+    !!!!!!!!!!!!!!!!#!!!!!!!!!!!!!!!!!!
+    @SRR098026.2 HWUSI-EAS1599_1:2:1:0:312 length=35
+    ...
+    A!@B!BBB@ABAB#########!!!!!!!######
+
+From your home directory, and without changing directories, use one short command to print the contents of all of the files in the `~/shell_data/untrimmed_fastq` directory.
+
+    -bash-4.2$ cat ~/shell_data/untrimmed_fastq/*.fastq
+    # wc tells you how lines are in a file
+
+#### Challenge 5
+
+What are the next three nucleotides (characters) after the first instance of the sequence, `TTTTT`?
+
+    -bash-4.2$ cat SRR097977.fastq | grep TTTTT | head
+    TGAAAAACAGAAAGGTAAATCAGTGAAATTTTTCAC
+    ...
+    # CAC is the answer!
+    # Can also use less, then type /TTTTT
+
+#### Challenge 6
+
+Starting in the `shell_data/untrimmed_fastq/` directory, do the following:
+
+-   Make sure that you have deleted your backup directory and all files it contains.
+-   Create a backup of each of your FASTQ files using `cp`. (Note: You'll need to do this individually for each of the two FASTQ files. We haven't learned yet how to do this with a wildcard.)
+-   Use a wildcard to move all of your backup files to a new backup directory.
+-   Change the permissions on all of your backup files to be write-protected.
+
+```{=html}
+<!-- -->
+```
+    # scp for copying. mv to move or rename. rm to remove
+    # mkdir to create new directory. chmod to edit permissions
+
+    -bash-4.2$ mkdir backup
+    -bash-4.2$ scp *.fastq backup
+    -bash-4.2$ chmod -w backup/*.fastq
+
+## [Redirection](https://datacarpentry.org/shell-genomics/04-redirection/index.html)
+
+::: callout-tip
+### Key Points
+
+-   grep is a powerful search tool with many options for customization.
+-   `>`, `>>`, and `|` are different ways of redirecting output.
+-   `command > file` redirects a command's output to a file.
+-   `command >> file` redirects a command's output to a file without overwriting the existing contents of the file.
+-   `command_1 | command_2` redirects the output of the first command as input to the second command.
+-   `for` loops are used for iteration.
+-   `basename` gets rid of repetitive parts of names.
+:::
+
+#### Challenge 1
+
+-   Search for the sequence `GNATNACCACTTCC` in the `SRR098026.fastq` file. Have your search return all matching lines and the name (or identifier) for each sequence that contains a match.
+
+-   Search for the sequence `AAGTT` in both FASTQ files. Have your search return all matching lines and the name (or identifier) for each sequence that contains a match.
+
+```{=html}
+<!-- -->
+```
+    # insert code and output here
+
+#### Challenge 2
+
+How many sequences are there in `SRR098026.fastq`? Remember that every sequence is formed by four lines.
+
+    # insert code and output here
+
+#### Challenge 3
+
+How many sequences in `SRR098026.fastq` contain at least 3 consecutive Ns?
+
+    # insert code and output here
+
+#### Challenge 4
+
+Print the file prefix of all of the `.txt` files in our current directory.
+
+    # insert code and output here
+
+#### Challenge 5
+
+Remove `_2019` from all of the `.txt` files.
+
+    # insert code and output here
