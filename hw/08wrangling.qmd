@@ -1,0 +1,176 @@
+---
+title: "Hw 8 - Data wrangling for genomics"
+format: docx
+editor: visual
+---
+
+Fill out [this Quarto document](https://github.com/BIFX552-22/CourseInfo/hw/08wrangling.qmd) while completing the lesson on data wrangling for genomics.
+
+## [Background and Metadata](https://datacarpentry.org/wrangling-genomics/01-background/index.html)
+
+Rather than copy the 1+ GB directory with the data for this lesson a bunch of times (once for each person), we'll create a symbolic link to the data and copy over the bits that we will be modifying ourselves. Navigate to your home directory and do the following:
+
+``` {{bash}}
+# go home
+cd ~
+
+# create a new `shell_data` directory
+mkdir Ecoli
+cd Ecoli
+
+# create directories that we will be working with
+mkdir results
+mkdir scripts
+mkdir trimmed_fastq
+
+# link new data directories to your directory
+ln -s /BIODATA/BIFX552/Ecoli/Ecoli_metadata_composite.csv .
+ln -s /BIODATA/BIFX552/Ecoli/data .
+ln -s /BIODATA/BIFX552/Ecoli/untrimmed_fastq .
+```
+
+If you want to work locally (e.g. on your laptop), you can follow the instructions [here](https://datacarpentry.org/genomics-workshop/setup.html) to get your environment set up.
+
+### Challenge 1
+
+Based on the metadata, can you answer the following questions?
+
+```{r}
+#| message: false
+#| echo: false
+
+library(readr)
+library(dplyr)
+
+# Won't actually work unless you have the file save locally.
+meta <- read_csv('Ecoli_metadata_composite.csv')
+```
+
+-   How many different generations exist in the data?
+
+    > Number of Generations: `r format(max(meta$generation), scientific = FALSE)`
+
+-   How many rows and how many columns are in this data?
+
+    > Number of Rows: `r nrow(meta)`
+
+    > Number of Columns: `r ncol(meta)`
+
+-   How many citrate+ mutants have been recorded in Ara-3?
+
+    > Number of CIT+ mutants: `r sum(meta$cit == 'plus', na.rm = TRUE)`
+
+-   How many hypermutable mutants have been recorded in Ara-3?
+
+    > Number of hypermutatable mutants: `r sum(meta$mutator == 'plus', na.rm = TRUE)`
+
+## [Quality Control](https://datacarpentry.org/wrangling-genomics/02-quality-control/index.html)
+
+### Challenge 2
+
+-   What is the last read in the `SRR2584863_1.fastq` file?
+
+    > Code: `bash -bash-4.2$ zcat untrimmed_fastq/SRR2584863_1.fastq.gz | tail`
+    >
+    > Last read: CCCFFFFFHHHHGJJJJJJJJJHGIJJJIJJJJIJJJJIIIIJJJJJJJJJJJJJIIJJJHHHHHFFFFFEEEEEDDDDDDDDDDDDDDDDDCDEDDBDBDDBDDDDDDDDDBDEEDDDD7\@BDDDDDD\>AA\>?B?\<@BDD\@BDC?BDA?
+
+-   How confident are you in this read?
+
+    > Fairly confident. The quality appears good, with just a few concerns here and there.
+
+### Challenge 3
+
+How big are the files in `untrimmed_fastq/` (show code and output)?
+
+``` {{bash}}
+-bash-4.2$ ls -lh untrimmed_fastq/
+total 1.2G
+dr-xr-xr-x. 3 johnson johnson 4.0K Sep 30  2020 ?
+lrwxrwxrwx. 1 johnson johnson   59 Sep 30  2020 NexteraPE-PE.fa -> /BIODATA/programs/Trimmomatic-0.39/adapters/NexteraPE-PE.fa
+-r--r--r--. 1 johnson johnson 175M Sep  9  2020 SRR2584863_1.fastq.gz
+-r--r--r--. 1 johnson johnson 183M Sep  9  2020 SRR2584863_2.fastq.gz
+-r--r--r--. 1 johnson johnson 309M Sep  9  2020 SRR2584866_1.fastq.gz
+-r--r--r--. 1 johnson johnson 296M Sep  9  2020 SRR2584866_2.fastq.gz
+-r--r--r--. 1 johnson johnson 124M Sep  9  2020 SRR2589044_1.fastq.gz
+-r--r--r--. 1 johnson johnson 128M Sep  9  2020 SRR2589044_2.fastq.gz
+dr-xr-xr-x. 3 johnson johnson 4.0K Oct  6  2020 untouched_data
+```
+
+### Challenge 4
+
+After running `fastqc` on your untrimmed data, which sample(s) looks the best in terms of per base sequence quality? Which sample(s) look the worst?
+
+> The data from SRR2584863_1.fastq.gz appears to have the best base sequence quality. The data from SRR2584863_2.fastq.gz appears to have the worst.
+
+### Challenge 5
+
+Which samples failed at least one of FastQC's quality tests? What test(s) did those samples fail?
+
+> SRR2584863_1 (Failed x0): None
+
+> SRR2584863_2 (Failed x3): Per base sequence quality, per tile sequence quality, per base sequence content.
+
+> SRR2584866_1 (Failed x3): Per base sequence quality, per base sequence content, adapter content.
+
+> SRR2584866_2 (Failed x1): Adapter content.
+
+> SRR2589044_1 (Failed x1): Adapter content.
+
+> SRR2589044_2 (Failed x4): Per base sequence quality, per tile sequence quality, per base sequence content, adapter content.
+
+## [Trimming and Filtering](https://datacarpentry.org/wrangling-genomics/03-trimming/index.html)
+
+``` {{bash}}
+trimmomatic PE -threads 2 untrimmed_fastq/SRR2584863_1.fastq.gz untrimmed_fastq/SRR2584863_2.fastq.gz trimmed_fastq/SRR2584863_1.trimmed.fastq.gz trimmed_fastq/SRR2584863_1un.trimmed.fastq.gz trimmed_fastq/SRR2584863_2.trimmed.fastq.gz trimmed_fastq/SRR2584863_2un.trimmed.fastq.gz SLIDINGWINDOW:4:20 MINLEN:25 ILLUMINACLIP:untrimmedfastq/NexteraPE-PE.fa:2:40:15
+```
+
+### Challenge 6
+
+Use the output from your Trimmomatic command to answer the following questions.
+
+-   What percent of reads did we discard from our sample?
+
+    > 8.97%
+
+-   What percent of reads did we keep both pairs?
+
+    > 91.03%
+
+### Challenge 7
+
+We trimmed our fastq files with Nextera adapters, but there are other adapters that are commonly used. What other adapter files came with Trimmomatic?
+
+``` {bash}}
+-bash-4.2$ ls /BIODATA/programs/Trimmomatic-0.39/adapters/
+NexteraPE-PE.fa  TruSeq2-SE.fa    TruSeq3-PE.fa
+TruSeq2-PE.fa    TruSeq3-PE-2.fa  TruSeq3-SE.fa
+```
+
+### Challenge 8
+
+Now that our samples have gone through quality control, they should perform better on the quality tests run by FastQC. Go ahead and re-run FastQC on your trimmed FASTQ files and visualize the HTML files to see whether your per base sequence quality is higher after trimming.
+
+![](SRR258463_1.trimmed_fastqc/Images/per_base_quality.png)
+
+## [Variant Calling](https://datacarpentry.org/wrangling-genomics/04-variant_calling/index.html)
+
+### Challenge 9
+
+We saved the reference genome as `data/ecoli_rel606.fasta.gz` and then decompressed it. What is the real name of the genome?
+
+    > CP000819.1 Escherichia coli B str. REL606, complete genome
+    
+### Challenge 10
+
+Use the `grep` and `wc` commands you have learned to assess how many variants are in the vcf file.
+
+```{{bash}}
+-bash-4.2$ grep -v '\#' results/vcf/SRR2584863_variants_final.vcf | wc -l
+25
+```
+
+### Challenge 11
+
+Visualize the alignment of the reads for our `SRR2584863` sample. What variant is present at position 433359? What is the canonical nucleotide in that position?
+
+    > Insertion with a T.

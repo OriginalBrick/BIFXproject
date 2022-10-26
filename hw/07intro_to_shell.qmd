@@ -169,9 +169,8 @@ Find the line number in your history for the command that listed all the .sh fil
 
 -   Print out the contents of the `~/shell_data/untrimmed_fastq/SRR097977.fastq` file. What is the last line of the file?
 
-```{=html}
 <!-- -->
-```
+
     # cat FileName displays whole thing.
     # less FileName lets you scroll line by line.
     # Quit with q. End of file with g.
@@ -210,9 +209,8 @@ Starting in the `shell_data/untrimmed_fastq/` directory, do the following:
 -   Use a wildcard to move all of your backup files to a new backup directory.
 -   Change the permissions on all of your backup files to be write-protected.
 
-```{=html}
 <!-- -->
-```
+
     # scp for copying. mv to move or rename. rm to remove
     # mkdir to create new directory. chmod to edit permissions
 
@@ -240,9 +238,8 @@ Starting in the `shell_data/untrimmed_fastq/` directory, do the following:
 
 -   Search for the sequence `AAGTT` in both FASTQ files. Have your search return all matching lines and the name (or identifier) for each sequence that contains a match.
 
-```{=html}
 <!-- -->
-```
+
     # insert code and output here
 
 #### Challenge 2
